@@ -7,7 +7,6 @@ from django.core.context_processors import csrf
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 import datetime
-import chromelogger as console
 from filter_manager.models import Filter, Condition, LOGICAL_OPERATORS
 from django.contrib.contenttypes.models import ContentType
 import simplejson as json
@@ -22,7 +21,6 @@ def save_filter(request):
 				quick = True;
 			else:
 				quick = False
-			console.log(request.user)
 			f = Filter(name=new_filter['name'], user_id=request.user.id, quick=quick, content_type = ct)
 			f.save()
 			for k,c in new_filter['conditions'].iteritems():
