@@ -28,21 +28,21 @@ Install app in your project:
 5. Insert ``{% get_static_prefix as static_prefix %}`` to your template, at the top of the file.
 6. Insert somewhere *after* jQuery and Twitter Bootstrap inits, this: ``<script type="text/javascript" src="{{ static_prefix }}filter_manager/filter_manager.js "></script>``
 7. Place somewhere in template, this:
-<pre>
-	<script type="text/javascript">
-    $(document).ready(function(){
-        $(document).on('click', '#new-filter-button', function(e){
-                    e.preventDefault()
-                    $('#new-filter').pimpMyFilter({
-                        name:'Name of your modal',
-                        app:'your_app_to_use_filter_manager',
-                        model:'your_model_of_the_app_to_use_filter',
-                        modalWidth:1000, //width of modal, req. "800". But, anyway it's fluid.
-                    });
-                });
-            });
-    </script>
-</pre>
+	<pre>
+		<script type="text/javascript">
+	    $(document).ready(function(){
+	        $(document).on('click', '#new-filter-button', function(e){
+	                    e.preventDefault()
+	                    $('#new-filter').pimpMyFilter({
+	                        name:'Name of your modal',
+	                        app:'your_app_to_use_filter_manager',
+	                        model:'your_model_of_the_app_to_use_filter',
+	                        modalWidth:1000, //width of modal, req. "800". But, anyway it's fluid.
+	                    });
+	                });
+	            });
+	    </script>
+	</pre>
 7. Start your project, jump to page with edited template and click this pretty button `New filter`
 8. You'll see modal window, something like on the pic at the top of this README.
 9. Try to select some field. Each type of field has own `value` field, that corresponds to type of field in model.
@@ -54,19 +54,19 @@ JS API
 ======
 1. Resize modal: `pimpMyFilter.setModalWidth(1000)`
 2. Redefine `value` field(*not tested*): 
-<pre>
-	pimpFields.<type_of_field> = function(ModelField){ 
-	//ModelField comes from pimpMyFilter.settings.structure
-	//ModelField = {"name":"some_name","type":"some_type"}. Use it.
+	<pre>
+		pimpFields.<type_of_field> = function(ModelField){ 
+		//ModelField comes from pimpMyFilter.settings.structure
+		//ModelField = {"name":"some_name","type":"some_type"}. Use it.
 
-                    field = this.__AbstractInputField();
-                    //or field = this.__AbstractSelectField();
-                    //..
-                    //... Your definition of field, e.g field.css(), etc
-                    //..
-                    return field;
-	}
-</pre>
+	                    field = this.__AbstractInputField();
+	                    //or field = this.__AbstractSelectField();
+	                    //..
+	                    //... Your definition of field, e.g field.css(), etc
+	                    //..
+	                    return field;
+		}
+	</pre>
 
 Known issues
 ============
