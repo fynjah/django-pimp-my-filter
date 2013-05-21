@@ -3,7 +3,7 @@ django-pimp-my-filter
 
 Use it at your own risk! Alpha-dev version, as is.
 
-### Required: 
+#### Required: 
 - Twitter Bootsrap 2.3+
 - jQuery 1.9+
 
