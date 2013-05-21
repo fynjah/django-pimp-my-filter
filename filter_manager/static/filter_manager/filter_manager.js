@@ -171,23 +171,29 @@ var pimpFields;
                                 settings.structure = data;
                                 /*
                                     structure should be as:
-                                    [
-                                        'operators':{
-                                            0:{
-                                                0:'operator',
-                                                1:'humanazied text'
-                                            },
-                                            1:{
-                                                0:'operator',
-                                                1:'humanazied text'
-                                            }
-                                            ...
+                                {
+                                    "fields": {
+                                        "1": {
+                                            "type": "CharField",
+                                            "name": "name"
                                         },
-                                        'fields':{
-                                            0:'field',
-                                            1:'field'
-                                        }
-                                    ]
+                                        "2": {
+                                            "type": "DateField",
+                                            "name": "date_added"
+                                        },
+                                        ...
+                                },
+                                "operators": [
+                                        [
+                                            "more",
+                                            "MORE"
+                                        ],
+                                        [
+                                            "more_eq",
+                                            "MORE or EQUAL"
+                                        ],
+                                        ...
+                                ]
                                 */
                             }
                         });
@@ -379,16 +385,6 @@ var pimpFields;
 
 })( jQuery );
 
-$(document).ready(function(){
-    $(document).on('click', '#new-filter-button', function(e){
-        e.preventDefault()
-        $('#new-filter').pimpMyFilter({
-            name:'projects',
-            app:'project',
-            model:'project',
-            modalWidth:1000,
-        });
-    });
-});
+
 
 

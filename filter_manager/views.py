@@ -1,4 +1,3 @@
-# Create your views here.
 from django.contrib import auth
 from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound, HttpResponseForbidden
@@ -21,15 +20,23 @@ def save_filter(request):
 				quick = True;
 			else:
 				quick = False
-			f = Filter(name=new_filter['name'], user_id=request.user.id, quick=quick, content_type = ct)
+			f = Filter(name=new_filter['name'], 
+						user_id=request.user.id, 
+						quick=quick, 
+						content_type = ct,)
 			f.save()
 			for k,c in new_filter['conditions'].iteritems():
-				con = Condition(filter=f, operator = c['operator'], value=c['value'], field=c['field'] )
+				con = Condition(filter=f, 
+								operator = c['operator'],
+								value=c['value'],
+								field=c['field'],)
 				con.save()
 			r = {'filter_id':f.id}
-			return HttpResponse(json.dumps(r, indent=4 * ' '), mimetype='application/json; charset=utf8')
+			return HttpResponse(json.dumps(r, indent = 4 * ' '), 
+				mimetype='application/json; charset=utf8')
 		else:
-			return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', mimetype='application/json; charset=utf8')
+			return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', 
+				mimetype='application/json; charset=utf8')
 
 @login_required
 def get_structure(request):
@@ -47,27 +54,35 @@ def get_structure(request):
 			r = {}
 			r.update({'fields':fields})
 			r.update({'operators':LOGICAL_OPERATORS})
-			return HttpResponse(json.dumps(r, indent=4 * ' '), mimetype='application/json; charset=utf8')
-	return HttpResponseForbidden('[{"error":"Forbidden"}]', mimetype='application/json; charset=utf8')
+			return HttpResponse(json.dumps(r, indent = 4 * ' '), 
+				mimetype='application/json; charset=utf8')
+	return HttpResponseForbidden('[{"error":"Forbidden"}]', 
+		mimetype='application/json; charset=utf8')
 
 @login_required
 def get_typeahead(request):
 	if request.is_ajax() and request.method == "POST":
 		if 'field' in request.POST and 'app' in request.POST and 'model' in request.POST:
-			instance = ContentType.model_class(ContentType.objects.get_by_natural_key(request.POST['app'],request.POST['model']))
+			ct = ContentType.objects.get_by_natural_key(request.POST['app'],request.POST['model'])
+			instance = ContentType.model_class(ct)
 			f = dict([(x.name,x) for x in instance._meta.fields ])
 			try:
 				o = f[request.POST['field']]
 			except KeyError:
-				return HttpResponseForbidden('[{"error":"Forbidden"}]', mimetype='application/json; charset=utf8')
+				return HttpResponseForbidden('[{"error":"Forbidden"}]', 
+					mimetype='application/json; charset=utf8')
 			o = o.related.parent_model
 			obj_list = o.objects.all()
 			lst = {}
 			for i,obj in enumerate(obj_list):
 				lst.update({i:obj.__unicode__()})
-			return HttpResponse(json.dumps(lst, indent=4 * ' '), mimetype='application/json; charset=utf8')
+			return HttpResponse(json.dumps(lst, indent = 4 * ' '), 
+				mimetype='application/json; charset=utf8')
 	else:
-		return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', mimetype='application/json; charset=utf8')
+		return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', 
+			mimetype='application/json; charset=utf8')
 
-
-	#f = dict([(x.name,x) for x in instance._meta.fields ])
+def use_filter(request):
+	if request.is_ajax():
+		if 'filter_id' in request.GET:
+			f = Filter.objects.get(pk = request.GET['filter_id'])
