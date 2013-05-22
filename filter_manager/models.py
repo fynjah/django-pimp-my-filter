@@ -34,6 +34,7 @@ class Condition(models.Model):
 	field = models.CharField(max_length=255)
 	operator = models.CharField(max_length=255, choices=LOGICAL_OPERATORS)
 	value = models.CharField(max_length=255)
+	oid = models.IntegerField(blank=True, null=True)
 
 	class Meta:
 		verbose_name = 'Condition'

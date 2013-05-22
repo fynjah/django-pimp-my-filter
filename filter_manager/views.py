@@ -17,7 +17,7 @@ def save_filter(request):
 			new_filter = json.loads(request.POST['filter'])
 			ct = ContentType.objects.get_by_natural_key(new_filter['app'],new_filter['model'])
 			if new_filter['quick'] == 'true':
-				quick = True;
+				quick = True
 			else:
 				quick = False
 			f = Filter(name=new_filter['name'], 
@@ -43,13 +43,19 @@ def get_structure(request):
 	if request.method == "POST" and request.is_ajax():
 		if 'app' in request.POST and 'model' in request.POST:
 			fields = {}
-			instance = ContentType.model_class(ContentType.objects.get_by_natural_key(request.POST['app'],request.POST['model']))
-			for i,x in enumerate(instance._meta.fields):
-				if x.name == 'id':
+			ct = ContentType.objects.get_by_natural_key(request.POST['app'],request.POST['model'])
+			instance = ContentType.model_class(ct)
+			for i,x in enumerate(instance._meta.get_all_field_names()):
+				z = instance._meta.get_field_by_name(x)
+				if(z[0].name == 'id'):
 					continue
 				f = {}
-				f.update({"name":x.name})
-				f.update({"type":x.get_internal_type()})
+				try:
+					f.update({"type":z[0].get_internal_type()})
+				except AttributeError:
+					continue
+				else:
+					f.update({"name":z[0].name})
 				fields.update( {i: f} )
 			r = {}
 			r.update({'fields':fields})
@@ -65,9 +71,10 @@ def get_typeahead(request):
 		if 'field' in request.POST and 'app' in request.POST and 'model' in request.POST:
 			ct = ContentType.objects.get_by_natural_key(request.POST['app'],request.POST['model'])
 			instance = ContentType.model_class(ct)
-			f = dict([(x.name,x) for x in instance._meta.fields ])
+			f = dict([(x,x) for x in instance._meta.get_all_field_names() ])
 			try:
 				o = f[request.POST['field']]
+				o = instance._meta.get_field_by_name(o)[0]
 			except KeyError:
 				return HttpResponseForbidden('[{"error":"Forbidden"}]', 
 					mimetype='application/json; charset=utf8')
@@ -75,7 +82,10 @@ def get_typeahead(request):
 			obj_list = o.objects.all()
 			lst = {}
 			for i,obj in enumerate(obj_list):
-				lst.update({i:obj.__unicode__()})
+				l = {}
+				l.update({"id":obj.id})
+				l.update({"unicode":obj.__unicode__()}) #not sure about __unicode__, actually
+				lst.update({i:l})
 			return HttpResponse(json.dumps(lst, indent = 4 * ' '), 
 				mimetype='application/json; charset=utf8')
 	else:
@@ -86,3 +96,5 @@ def use_filter(request):
 	if request.is_ajax():
 		if 'filter_id' in request.GET:
 			f = Filter.objects.get(pk = request.GET['filter_id'])
+	return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', 
+		mimetype='application/json; charset=utf8')

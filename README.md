@@ -19,7 +19,7 @@ How to use:
 4. Run ``[sudo] python setup.py install``
 5. Now app is installed.
 
-Install app in your project:
+Connect app to your project:
 ============================
 1. Open ``settings.py`` of your project. At the end of the file write ``INSTALLED_APPS += ('filter_manager',)``
 2. Open ``urls.py`` file. Edit ``urlpatterns`` by adding ``('^pimp-my-filter/', include('filter_manager.urls')),``
@@ -37,7 +37,8 @@ Install app in your project:
 	                        app:'your_app_to_use_filter_manager',
 	                        model:'your_model_of_the_app_to_use_filter', 
 	                        modalWidth:1000, //width of modal, req. from "800" to "1000". But, anyway it's fluid. default:"800"
-	                        url:"/your_url_pattern_to_filter_manager/" //default: "/pimp-my-filter/"
+	                        url:"/your_url_pattern_to_filter_manager/" //default: "/pimp-my-filter/",
+	                        limit:10, //default: '0'. Limit num of conditions.
 	                    });
 	                });
 	            });
@@ -69,10 +70,8 @@ JS API
 
 Known issues
 ============
-1. NO support for ManyToManyField(You can define it, by adding to `pimpFields` definition of `ManyToMany`)
-2. Some bugs with HTML markup, but works nice in Chrome.
-3. For this moment you can't use filters:)
-4. Lot of other bugs, which I will fix soon:)
-
+1. Some bugs with HTML markup, but works nice in Chrome.
+2. For this moment you can't use filters:)
+3. Lot of other bugs, which I will fix soon:)
 
 PS: This app is designed for modern browsers! *Stop supporting old versions of IE!*

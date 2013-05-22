@@ -19,9 +19,13 @@ var pimpFields;
             __buttonRemove: function(){
                 button = $('<button/>').addClass('btn row-remove btn-block').text('Remove').css({margin:'0 10px 0 0'});
                 div = $('<div/>').addClass('span3');
+                _this = this;
                 button.on('click', function(e){
                     e.preventDefault();
                     $(this).parent().parent().remove();
+                    if(($(_this.__object).find('.modal-body form .condition').size() < _this.settings.limit) && $(_this.__object).find('a.new-row').hasClass('disabled')){
+                        $(_this.__object).find('a.new-row').removeClass('disabled');
+                    }
                 });
                 div.append(button)
                 return $(div);
@@ -51,7 +55,6 @@ var pimpFields;
                     fields += '<option value="'+elem.name+'">'+elem.name+'</option>'
                 });
 
-
                 select_field = this.__select('fields', fields);
                 _this = this;
                 select_field.find('select').on('change', function(e){
@@ -68,13 +71,14 @@ var pimpFields;
                             }
                         });
                     }
-
                 })
 
                 dv.append(select_field);
                 dv.append(this.__select('operators', operators));
                 dv.append(dv_value);
-                dv.append(this.__buttonRemove());
+                if(this.settings.limit !== 1){                
+                    dv.append(this.__buttonRemove());
+                }
                 condition.append(dv)
 
                 return $(condition);
@@ -93,11 +97,22 @@ var pimpFields;
                 _this = this;
                 new_cond_button.on('click', function(e){
                     e.preventDefault();
-                    filter = $(_this.__object).find('.modal-body form');
-                    filter.append(_this.__condition());
+
+                    if($(this).hasClass('disabled')){
+                        return false;
+                    }
+                    else{
+                        filter = $(_this.__object).find('.modal-body form');
+                        filter.append(_this.__condition());   
+                        if( (_this.settings.limit !== 0) && (filter.find('.condition').size() >= _this.settings.limit) ){
+                            $(this).addClass('disabled');
+                        }
+                    }
                 });
                 
-                dv_menu.append(new_cond_button);
+                if(this.settings.limit !== 1){
+                    dv_menu.append(new_cond_button);
+                }
                 dv_menu.append(dv_filter_name);
                 dv_menu.append(quick);
                 menu.append(dv_menu);
@@ -207,7 +222,7 @@ var pimpFields;
                 header = $(this.__object).find('.modal-header h3');
                 header.text(settings.header + ' for ' + settings.name)
                 if(! $('.modal-footer .save-filter').size() > 0)
-                    $(this.__object).find('.modal-footer').append(this.__save_button());
+                    $(this.__object).find('.modal-footer').append(this.__save_button()).css({position:'relative', zIndex:1}); //bootstrap typeahead fix
                 
                 code = $('<div/>').append('<form/>');
                 
@@ -235,6 +250,7 @@ var pimpFields;
                 name : '',
                 modalWidth:800,
                 url:'/pimp-my-filter/' ,
+                limit:0,
             },
         }
         pimpFields = {
@@ -249,22 +265,18 @@ var pimpFields;
                 },
                 ForeignKey:function(requestedField){
                     field = this.__AbstractInputField();
-                    field.attr('type','text').attr('placeholder','Start typing...');
+                    field.attr('autocomplete','off').attr('type','text').attr('placeholder','Start typing...');
                     var jqxhr = $.ajax({
                         type: "POST",
                         data: 'field='+requestedField.name+'&app='+this.__parent.settings.app+'&model='+this.__parent.settings.model,
-                        url: __parent.settings.url+"get_typeahead/",
+                        url: this.__parent.settings.url+"get_typeahead/",
                         dataType: "json",
                         global: false,
-                        async:false,
+                        async:true,
                         success: function(data){
                             typeahead = []
-                            $.each(data, function(k,v) {
-                                typeahead.push(v)
-                            })
-                            field.typeahead({
-                                source:typeahead
-                            });
+                            $.each(data, function(k,v){typeahead.push(v.unicode)});
+                            field.typeahead({source:typeahead});
                         }
                     });
 
@@ -287,10 +299,10 @@ var pimpFields;
                     return field;
                 },
                 IntegerField:function(){
-                    return this.__AbstractInputField().attr('type','text');
+                    return this.__AbstractInputField().attr('type','number');
                 },
                 BigIntegerField:function(){
-                    return this.__AbstractInputField().attr('type','text');
+                    return this.__AbstractInputField().attr('type','number');
                 },
                 CommaSeparatedIntegerField:function() {
                     return this.__AbstractInputField().attr('type','text');
@@ -302,7 +314,10 @@ var pimpFields;
                     return this.__AbstractInputField().attr('type','datetime-local');
                 },
                 DecimalField:function(){
-                    return this.__AbstractInputField().attr('type','number');
+                    field = this.__AbstractInputField().attr('type','number'); 
+                    field.attr('placeholder','1.0');
+                    field.attr('pattern', '(^[+]?\d*\.?\d*[1-9]+\d*$)|(^[+]?[1-9]+\d*\.\d*$)');
+                    return field;
                 },
                 EmailField:function(){
                     return this.__AbstractInputField().attr('type','email');
@@ -317,19 +332,24 @@ var pimpFields;
                     return this.__AbstractInputField().attr('type','text');
                 },
                 FloatField:function(){
-                    return this.__AbstractInputField().attr('type','number');
+                    return this.DecimalField();
                 },
                 ImageField:function(){
                     return this.BooleanField();
                 },
                 IntegerField:function(){
-                    return this.__AbstractInputField().attr('type','number');
+                    field = this.__AbstractInputField().attr('type','number');
+                    field.attr('pattern','^[0-9]+$')
+                    return field;
                 },
                 IPAddressField:function(){
-                    return this.__AbstractInputField().attr('type','text');
+                    field = this.__AbstractInputField().attr('type','text');
+                    field.attr('placeholder','255.255.255.255')
+                    field.attr('pattern','((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$')
+                    return field;
                 },
                 GenericIPAddressField:function(){
-                    return this.__AbstractInputField().attr('type','text');
+                    return this.IPAddressField();
                 },
                 NullBooleanField:function(){
                     return this.BooleanField();
@@ -354,7 +374,13 @@ var pimpFields;
                 },
                 URLField:function(){
                     return this.__AbstractInputField().attr('type','url');
-                }
+                },
+                ManyToManyField:function(requestedField){
+                    return this.ForeignKey(requestedField)
+                },
+                OneToOneField:function(requestedField){
+                    return this.ForeignKey(requestedField)
+                },
             }           
 
   var methods = {
@@ -363,6 +389,7 @@ var pimpFields;
         pimpMyFilter.settings = $.extend(settings, options);
         pimpMyFilter.__object = this;
         $(this).off('.data-api').modal('show');
+        $(this).find('.modal-body').css({overflow:"visible"}) //bootstrap typeahead fix
         return pimpMyFilter.__createFilter()
     },
     newCondition: function(){
