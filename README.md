@@ -28,7 +28,7 @@ Install app in your project:
 5. Insert ``{%load% static}`` and ``{% get_static_prefix as static_prefix %}`` to your template, at the top of the file.
 6. Insert somewhere *after* jQuery and Twitter Bootstrap inits, this: ``<script type="text/javascript" src="{{ static_prefix }}filter_manager/filter_manager.js "></script>``
 7. Place somewhere in template, this:
-	<pre>
+<pre>
 	    $(document).ready(function(){
 	        $(document).on('click', '#new-filter-button', function(e){
 	                    e.preventDefault()
@@ -41,7 +41,7 @@ Install app in your project:
 	                    });
 	                });
 	            });
-	</pre>
+</pre>
 7. Start your project, jump to page with edited template and click this pretty button `New filter`
 8. You'll see modal window, something like on the pic at the top of this README.
 9. Try to select some field. Each type of field has own `value` field, that corresponds to type of field in model.
@@ -52,9 +52,9 @@ Install app in your project:
 JS API
 ======
 1. Resize modal: `pimpMyFilter.setModalWidth(1000)`
-2. Redefine `value` field(*not tested*): 
+2. Redefine `value` field( *not tested* ): 
 	<pre>
-		pimpFields.<type_of_field> = function(ModelField){ 
+		pimpFields.[type_of_field] = function(ModelField){ 
 		//ModelField comes from pimpMyFilter.settings.structure
 		//ModelField = {"name":"some_name","type":"some_type"}. Use it.
 
