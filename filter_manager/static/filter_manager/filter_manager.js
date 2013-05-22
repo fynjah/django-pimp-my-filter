@@ -163,7 +163,7 @@ var pimpFields;
                         var jqxhr = $.ajax({
                             type: "POST",
                             data:'app='+settings.app+'&model='+settings.model,
-                            url: settings.url+'get_structure/",
+                            url: settings.url+"get_structure/",
                             dataType: "json",
                             global: false,
                             async:false,
