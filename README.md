@@ -21,27 +21,26 @@ How to use:
 
 Install app in your project:
 ============================
-1. Open ``settings.py`` of your project. At the end of file write ``INSTALLED_APPS += ('filter_manager',)``
+1. Open ``settings.py`` of your project. At the end of the file write ``INSTALLED_APPS += ('filter_manager',)``
 2. Open ``urls.py`` file. Edit ``urlpatterns`` by adding ``('^pimp-my-filter/', include('filter_manager.urls')),``
 3. Open your shell, find your project and run `python manage.py syncdb`.
 4. Insert [this code](https://raw.github.com/fynjah/django-pimp-my-filter/master/filter_manager/templates/base.html) to your template, somewhere.
-5. Insert ``{% get_static_prefix as static_prefix %}`` to your template, at the top of the file.
+5. Insert ``{%load% static}`` and ``{% get_static_prefix as static_prefix %}`` to your template, at the top of the file.
 6. Insert somewhere *after* jQuery and Twitter Bootstrap inits, this: ``<script type="text/javascript" src="{{ static_prefix }}filter_manager/filter_manager.js "></script>``
 7. Place somewhere in template, this:
 	<pre>
-		<script type="text/javascript">
 	    $(document).ready(function(){
 	        $(document).on('click', '#new-filter-button', function(e){
 	                    e.preventDefault()
 	                    $('#new-filter').pimpMyFilter({
 	                        name:'Name of your modal',
 	                        app:'your_app_to_use_filter_manager',
-	                        model:'your_model_of_the_app_to_use_filter',
-	                        modalWidth:1000, //width of modal, req. "800". But, anyway it's fluid.
+	                        model:'your_model_of_the_app_to_use_filter', 
+	                        modalWidth:1000, //width of modal, req. from "800" to "1000". But, anyway it's fluid. default:"800"
+	                        url:"/your_url_pattern_to_filter_manager/" //default: "/pimp-my-filter/"
 	                    });
 	                });
 	            });
-	    </script>
 	</pre>
 7. Start your project, jump to page with edited template and click this pretty button `New filter`
 8. You'll see modal window, something like on the pic at the top of this README.
@@ -71,7 +70,7 @@ JS API
 Known issues
 ============
 1. NO support for ManyToManyField(You can define it, by adding to `pimpFields` definition of `ManyToMany`)
-2. Some bugs with HTML markup.
+2. Some bugs with HTML markup, but works nice in Chrome.
 3. For this moment you can't use filters:)
 4. Lot of other bugs, which I will fix soon:)
 

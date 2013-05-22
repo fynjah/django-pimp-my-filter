@@ -137,7 +137,7 @@ var pimpFields;
                         var jqxhr = $.ajax({
                             type: "POST",
                             data: 'filter='+window.JSON.stringify(responce),
-                            url: "/pimp-my-filter/save_filter/",
+                            url: _this+"save_filter/",
                             dataType: "json",
                             global: false,
                             async:false,
@@ -163,7 +163,7 @@ var pimpFields;
                         var jqxhr = $.ajax({
                             type: "POST",
                             data:'app='+settings.app+'&model='+settings.model,
-                            url: "/pimp-my-filter/get_structure/",
+                            url: settings.url+'get_structure/",
                             dataType: "json",
                             global: false,
                             async:false,
@@ -234,6 +234,7 @@ var pimpFields;
                 model: null,
                 name : '',
                 modalWidth:800,
+                url:'/pimp-my-filter/' ,
             },
         }
         pimpFields = {
@@ -248,11 +249,11 @@ var pimpFields;
                 },
                 ForeignKey:function(requestedField){
                     field = this.__AbstractInputField();
-                    field.attr('type','text');
+                    field.attr('type','text').attr('placeholder','Start typing...');
                     var jqxhr = $.ajax({
                         type: "POST",
                         data: 'field='+requestedField.name+'&app='+this.__parent.settings.app+'&model='+this.__parent.settings.model,
-                        url: "/pimp-my-filter/get_typeahead/",
+                        url: __parent.settings.url+"get_typeahead/",
                         dataType: "json",
                         global: false,
                         async:false,
