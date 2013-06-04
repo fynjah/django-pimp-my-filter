@@ -1,5 +1,10 @@
 Change list
 ===========
+####04/06/2013
+1. Some minor fixes
+2. Added simple validation, before saving filter.
+3. Fixed `modal('hide')`
+
 ####22/05/2013
 1. Fix of hardcoded urls in `$.pimpMyFilter()`.
 2. Bootstrap `typeahead` fix.

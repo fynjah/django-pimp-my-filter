@@ -70,7 +70,7 @@ JS API
 
 Known issues
 ============
-1. Some bugs with HTML markup, but works nice in Chrome.
+1. Some bugs with HTML markup, but works nice with Chrome.
 2. For this moment you can't use filters:)
 3. Lot of other bugs, which I will fix soon:)
 

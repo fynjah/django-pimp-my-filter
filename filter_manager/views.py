@@ -8,23 +8,30 @@ from django.db.models import Q
 import datetime
 from filter_manager.models import Filter, Condition, LOGICAL_OPERATORS
 from django.contrib.contenttypes.models import ContentType
-import simplejson as json
+try:
+	import simplejson as json
+except ImportError:
+	from django.utils import simplejson as json
 
 @login_required
 def save_filter(request):
 	if request.method == "POST" and request.is_ajax():
 		if 'filter' in request.POST:
 			new_filter = json.loads(request.POST['filter'])
-			ct = ContentType.objects.get_by_natural_key(new_filter['app'],new_filter['model'])
+			ct = ContentType.objects.get_by_natural_key(new_filter['app'],
+				new_filter['model'])
+
 			if new_filter['quick'] == 'true':
 				quick = True
 			else:
 				quick = False
+			
 			f = Filter(name=new_filter['name'], 
 						user_id=request.user.id, 
 						quick=quick, 
 						content_type = ct,)
 			f.save()
+			
 			for k,c in new_filter['conditions'].iteritems():
 				con = Condition(filter=f, 
 								operator = c['operator'],
@@ -32,6 +39,7 @@ def save_filter(request):
 								field=c['field'],)
 				con.save()
 			r = {'filter_id':f.id}
+			
 			return HttpResponse(json.dumps(r, indent = 4 * ' '), 
 				mimetype='application/json; charset=utf8')
 		else:
@@ -43,7 +51,8 @@ def get_structure(request):
 	if request.method == "POST" and request.is_ajax():
 		if 'app' in request.POST and 'model' in request.POST:
 			fields = {}
-			ct = ContentType.objects.get_by_natural_key(request.POST['app'],request.POST['model'])
+			ct = ContentType.objects.get_by_natural_key(request.POST['app'],
+				request.POST['model'])
 			instance = ContentType.model_class(ct)
 			for i,x in enumerate(instance._meta.get_all_field_names()):
 				z = instance._meta.get_field_by_name(x)
@@ -68,8 +77,11 @@ def get_structure(request):
 @login_required
 def get_typeahead(request):
 	if request.is_ajax() and request.method == "POST":
-		if 'field' in request.POST and 'app' in request.POST and 'model' in request.POST:
-			ct = ContentType.objects.get_by_natural_key(request.POST['app'],request.POST['model'])
+		if ('field' in request.POST and 
+			'app' in request.POST and 
+			'model' in request.POST):
+			ct = ContentType.objects.get_by_natural_key(request.POST['app'],
+				request.POST['model'])
 			instance = ContentType.model_class(ct)
 			f = dict([(x,x) for x in instance._meta.get_all_field_names() ])
 			try:
@@ -84,7 +96,8 @@ def get_typeahead(request):
 			for i,obj in enumerate(obj_list):
 				l = {}
 				l.update({"id":obj.id})
-				l.update({"unicode":obj.__unicode__()}) #not sure about __unicode__, actually
+				l.update({"unicode":obj.__unicode__()}) 
+				#not sure about __unicode__, actually
 				lst.update({i:l})
 			return HttpResponse(json.dumps(lst, indent = 4 * ' '), 
 				mimetype='application/json; charset=utf8')
@@ -92,9 +105,21 @@ def get_typeahead(request):
 		return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', 
 			mimetype='application/json; charset=utf8')
 
+def get_filters_by_user(request):
+	if request.is_ajax():
+		user_filters = Filter.objects.filter(user = request.user)
+		f_list = {}
+		for f in user_filters:
+			f_list.update({'id':f.pk, 'name':f.name, 'quick':f.quick})
+		return HttpResponse(json.dumps(f_list, indent = 4 * ' '), 
+			mimetype='application/json; charset=utf8')
+	return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', 
+		mimetype='application/json; charset=utf8')
+
 def use_filter(request):
 	if request.is_ajax():
 		if 'filter_id' in request.GET:
 			f = Filter.objects.get(pk = request.GET['filter_id'])
+
 	return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', 
 		mimetype='application/json; charset=utf8')

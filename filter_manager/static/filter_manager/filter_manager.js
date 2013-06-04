@@ -10,6 +10,7 @@ var pimpFields;
             },
             setModalWidth: function(width){
                 _this = this;
+                _this.settings.modalWidth = width;
                 $(this.__object).css({
                     width:_this.settings.modalWidth,
                     marginLeft:_this.settings.modalWidth/-2,
@@ -45,8 +46,8 @@ var pimpFields;
                 condition.addClass('condition');
                 dv = $('<div/>').addClass('span12 well well-small').css({marginBottom:'10px'});
                 dv_value = $('<div/>').addClass('span3 value-wrap pull-left');
-                operators = '<option>-----</option>';
-                fields = '<option>-----</option>';
+                operators = '<option value="0">-----</option>';
+                fields = '<option value="0">-----</option>';
                 
                 $.each(this.settings.structure.operators, function (index, elem) {
                     operators += '<option value="'+elem[0]+'">'+elem[1]+'</option>'
@@ -61,7 +62,7 @@ var pimpFields;
                     e.preventDefault();
                     _select = $(this);
                     val = $(this).val();
-                    if(val == '-----'){
+                    if(val === '0'){
                         _select.parent().parent().find('.value-wrap').html('')
                     }
                     else{
@@ -86,7 +87,7 @@ var pimpFields;
             __menu: function(){
                 menu = this.__row();
                 dv_menu = $('<div/>').addClass('span12');
-                filter_name = $('<input/>').attr('type', 'text').attr('placeholder','Filter name').addClass('filter_name');
+                filter_name = $('<input/>').attr('type', 'text').attr('placeholder','Filter name').addClass('filter_name input-block-level').attr('required', 'required');
                 dv_filter_name = $('<div/>').addClass('span3').append(filter_name);
                 new_cond_button = $('<a/>').addClass('btn new-row span3').attr('href','#').html('<i class="icon-plus"></i> Add condition').attr('title','New condition');
                 
@@ -131,6 +132,11 @@ var pimpFields;
             },
             __save_filter: function(filter){
                     _this = this
+                    var error = false;
+                    if(filter.find('input.filter_name').val() === ''){
+                        error = true;
+                        filter.find('input.filter_name').css({outline:'1px solid #ff0000'})
+                    }
                     responce = {
                         name: filter.find('input.filter_name').val(),
                         quick: filter.find('input.quick-filter').prop("checked"),
@@ -142,17 +148,26 @@ var pimpFields;
                         field = $(condition).find('select.fields').val();
                         operator = $(condition).find('select.operators').val();
                         value = $(condition).find('input.value').val();
+                        if( (field === '0') || (operator === '0') || (value === 'undefined') || (value === '') )
+                        {
+                            $(this).find('.span12').css({outline:'1px solid #ff0000'})
+                            error = true;
+                        }
+                        else{
+                            $(this).find('.span12').css({outline:''})
+                        }
                         conditions[key] = {
-                            field:field,
-                            operator:operator,
-                            value:value
+                            field:encodeURIComponent( field ),
+                            operator:encodeURIComponent( operator ),
+                            value:encodeURIComponent( value )
                         }
                     });
                     responce.conditions = conditions;
+                    if(!error){
                         var jqxhr = $.ajax({
                             type: "POST",
                             data: 'filter='+window.JSON.stringify(responce),
-                            url: _this+"save_filter/",
+                            url: _this.settings.url+"save_filter/",
                             dataType: "json",
                             global: false,
                             async:false,
@@ -160,12 +175,19 @@ var pimpFields;
                                 _this.__hideBody()
                             }
                         });
+                    }
             },
             __hideBody:function(){
-                m_body = this.find('.modal-body');
-                mbody.animate({
-                    opacity:'0'
+                _this = this;
+                m_body = $(_this.__object).find('.modal-body');
+                m_body.animate({
+                    opacity:0
                 }, 1000);
+                m_body.queue(function() {
+                    $(_this.__object).modal('hide');
+                    m_body.css({'opacity':1})
+                    $(this).dequeue();
+                });
                 return m_body;
             },
             __createFilter: function(){
@@ -361,7 +383,7 @@ var pimpFields;
                     return this.__AbstractInputField().attr('type','number');
                 },
                 SlugField:function(){
-                    return this.__AbstractInputField().attr('type','text');
+                    return this.__AbstractInputField().attr('type','text').attr('pattern', '^[a-zA-Z0-9\-_]+$');
                 },
                 SmallIntegerField:function(){
                     return this.__AbstractInputField().attr('type','number'); 
@@ -400,8 +422,6 @@ var pimpFields;
   };
 
   $.fn.pimpMyFilter = function( method ) {
-    
-    // логика вызова метода
     if ( methods[method] ) {
       return methods[ method ].apply( this, Array.prototype.slice.call( arguments, 1 ));
     } else if ( typeof method === 'object' || ! method ) {
