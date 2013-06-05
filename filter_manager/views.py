@@ -9,7 +9,6 @@ import datetime
 from filter_manager.models import Filter, Condition, LOGICAL_OPERATORS
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.generic import GenericRelation
-import chromelogger as console
 try:
 	import simplejson as json
 except ImportError:
@@ -78,7 +77,6 @@ def get_structure(request):
 
 @login_required
 def use_filter(request):
-	console.log(request.GET['filter_id'])
 	if not request.is_ajax():
 		if 'filter_id' in request.GET:
 			flt = Filter.objects.only('content_type').get(pk = request.GET['filter_id'])
