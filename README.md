@@ -71,7 +71,7 @@ JS API
 Known issues
 ============
 1. Some bugs with HTML markup, but works nice with Chrome.
-2. For this moment you can't use filters:)
+2. For this moment you CAN use filters, but no API yet. Also, lot of bugs. At this moment works simple filters, such as:`name` `equal` `some_value`. `http://<your_host>/pimp-my-filter/use_filter/?filter_id=2`
 3. Lot of other bugs, which I will fix soon:)
 
 PS: This app is designed for modern browsers! *Stop supporting old versions of IE!*

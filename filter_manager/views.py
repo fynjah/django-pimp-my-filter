@@ -8,6 +8,8 @@ from django.db.models import Q
 import datetime
 from filter_manager.models import Filter, Condition, LOGICAL_OPERATORS
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.generic import GenericRelation
+import chromelogger as console
 try:
 	import simplejson as json
 except ImportError:
@@ -53,25 +55,86 @@ def get_structure(request):
 			fields = {}
 			ct = ContentType.objects.get_by_natural_key(request.POST['app'],
 				request.POST['model'])
-			instance = ContentType.model_class(ct)
-			for i,x in enumerate(instance._meta.get_all_field_names()):
-				z = instance._meta.get_field_by_name(x)
-				if(z[0].name == 'id'):
+			model = ContentType.model_class(ct)
+			for i,x in enumerate(model._meta.get_all_field_names()):
+				obj, m, direct, m2m = model._meta.get_field_by_name(x)
+
+				if obj.name == 'id':
+					continue
+				if not direct:
 					continue
 				f = {}
-				try:
-					f.update({"type":z[0].get_internal_type()})
-				except AttributeError:
-					continue
-				else:
-					f.update({"name":z[0].name})
+				f.update({"type":obj.get_internal_type()})
+				f.update({"name":obj.name})
 				fields.update( {i: f} )
+
 			r = {}
 			r.update({'fields':fields})
 			r.update({'operators':LOGICAL_OPERATORS})
 			return HttpResponse(json.dumps(r, indent = 4 * ' '), 
 				mimetype='application/json; charset=utf8')
 	return HttpResponseForbidden('[{"error":"Forbidden"}]', 
+		mimetype='application/json; charset=utf8')
+
+@login_required
+def use_filter(request):
+	console.log(request.GET['filter_id'])
+	if not request.is_ajax():
+		if 'filter_id' in request.GET:
+			flt = Filter.objects.only('content_type').get(pk = request.GET['filter_id'])
+			model = ContentType.model_class(flt.content_type)
+			kwargs = {}
+			for c in flt.conditions.all():
+				field = None
+				lookup = c.operator
+				'''if c.operator == 'more':
+					lookup = '__gt'
+				elif c.operator == 'more_eq':
+					lookup = '__gte'
+				elif c.operator == 'less':
+					lookup = '__lt'
+				elif c.operator == 'less_eq':
+					lookup = '__lte'
+				elif c.operator == 'eq':
+					lookup = '__exact'
+				#elif c.operator == 'not_eq':
+				#	pass #exclude
+				elif c.operator == 'in':
+					lookup = '__in'
+				elif c.operator == 'like':
+					lookup = '__iexact'
+				#elif c.operator == 'not_in':
+				#	pass #exclude
+				elif c.operator == 'null':
+					lookup = '__isnull'
+				else:
+					pass'''
+				field = "%s%s" % (c.field, lookup)
+				kwargs.update({field:c.value})
+			qs = model.objects.filter(**kwargs)
+			response = {}
+			for i,q in enumerate(qs):
+				field_list = {}
+				for f in q._meta.get_all_field_names():
+					obj, model, direct, m2m = q._meta.get_field_by_name(f)
+					if isinstance(obj, GenericRelation):
+						continue
+					if not direct:
+						continue
+					if m2m:
+						l = {}
+						val = obj.value_from_object(q)
+						for m in obj.value_from_object(q):
+							l.update({m.pk:m.__unicode__()})
+						field_list.update({f:l})
+					else:
+						field_list.update({f:obj.value_to_string(q)})
+
+				response.update({i:field_list})
+			r = '<html><body><pre>%s</pre></body></html>' % json.dumps(response, indent = 4 * ' ')
+			return HttpResponse(r, )
+				#mimetype='application/json; charset=utf8')
+	return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', 
 		mimetype='application/json; charset=utf8')
 
 @login_required
@@ -116,10 +179,4 @@ def get_filters_by_user(request):
 	return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', 
 		mimetype='application/json; charset=utf8')
 
-def use_filter(request):
-	if request.is_ajax():
-		if 'filter_id' in request.GET:
-			f = Filter.objects.get(pk = request.GET['filter_id'])
 
-	return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', 
-		mimetype='application/json; charset=utf8')

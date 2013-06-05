@@ -288,6 +288,7 @@ var pimpFields;
                 ForeignKey:function(requestedField){
                     field = this.__AbstractInputField();
                     field.attr('autocomplete','off').attr('type','text').attr('placeholder','Start typing...');
+                    
                     var jqxhr = $.ajax({
                         type: "POST",
                         data: 'field='+requestedField.name+'&app='+this.__parent.settings.app+'&model='+this.__parent.settings.model,
@@ -296,7 +297,7 @@ var pimpFields;
                         global: false,
                         async:true,
                         success: function(data){
-                            typeahead = []
+                            typeahead = [];
                             $.each(data, function(k,v){typeahead.push(v.unicode)});
                             field.typeahead({source:typeahead});
                         }

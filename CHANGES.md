@@ -1,5 +1,8 @@
 Change list
 ===========
+####05/06/2013
+1. `use_filter` init. For this moment you CAN use filters, but no API yet. Also, lot of bugs. At this moment works filters, such as:`name` `equal` `some_value`. `http://<your_host>/pimp-my-filter/use_filter/?filter_id=2`
+
 ####04/06/2013
 1. Some minor fixes
 2. Added simple validation, before saving filter.
