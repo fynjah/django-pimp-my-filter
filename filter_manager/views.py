@@ -85,28 +85,6 @@ def use_filter(request):
 			for c in flt.conditions.all():
 				field = None
 				lookup = c.operator
-				'''if c.operator == 'more':
-					lookup = '__gt'
-				elif c.operator == 'more_eq':
-					lookup = '__gte'
-				elif c.operator == 'less':
-					lookup = '__lt'
-				elif c.operator == 'less_eq':
-					lookup = '__lte'
-				elif c.operator == 'eq':
-					lookup = '__exact'
-				#elif c.operator == 'not_eq':
-				#	pass #exclude
-				elif c.operator == 'in':
-					lookup = '__in'
-				elif c.operator == 'like':
-					lookup = '__iexact'
-				#elif c.operator == 'not_in':
-				#	pass #exclude
-				elif c.operator == 'null':
-					lookup = '__isnull'
-				else:
-					pass'''
 				field = "%s%s" % (c.field, lookup)
 				kwargs.update({field:c.value})
 			qs = model.objects.filter(**kwargs)
@@ -129,9 +107,9 @@ def use_filter(request):
 						field_list.update({f:obj.value_to_string(q)})
 
 				response.update({i:field_list})
-			r = '<html><body><pre>%s</pre></body></html>' % json.dumps(response, indent = 4 * ' ')
+			r = json.dumps(response, indent = 4 * ' ')
 			return HttpResponse(r, )
-				#mimetype='application/json; charset=utf8')
+				mimetype='application/json; charset=utf8')
 	return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', 
 		mimetype='application/json; charset=utf8')
 
