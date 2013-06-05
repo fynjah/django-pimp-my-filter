@@ -108,7 +108,7 @@ def use_filter(request):
 
 				response.update({i:field_list})
 			r = json.dumps(response, indent = 4 * ' ')
-			return HttpResponse(r, )
+			return HttpResponse(r, 
 				mimetype='application/json; charset=utf8')
 	return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', 
 		mimetype='application/json; charset=utf8')
