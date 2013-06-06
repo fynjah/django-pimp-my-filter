@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound, HttpResponseForbidden
@@ -19,6 +20,14 @@ def save_filter(request):
 	if request.method == "POST" and request.is_ajax():
 		if 'filter' in request.POST:
 			new_filter = json.loads(request.POST['filter'])
+			app_model = '%s.%s' % (new_filter['app'],new_filter['model'])
+			if settings.PIMP_MY_FILTER['ALLOWED_MODELS']:
+				if not app_model in settings.PIMP_MY_FILTER['ALLOWED_MODELS']:
+					return HttpResponseForbidden('[{"error":"Forbidden."}]', 
+						mimetype='application/json; charset=utf8')
+			else:
+				return HttpResponseForbidden('[{"error":"Forbidden. Check PIMP_MY_FILTER Settings."}]', 
+					mimetype='application/json; charset=utf8')
 			ct = ContentType.objects.get_by_natural_key(new_filter['app'],
 				new_filter['model'])
 
@@ -34,9 +43,20 @@ def save_filter(request):
 			f.save()
 			
 			for k,c in new_filter['conditions'].iteritems():
+				data = c['value_data']
+				if data['type'] == 'ForeignKey' or data['type'] == 'ManyToManyField' or data['type'] == 'OneToOneField':
+					value = data['fk_id']
+				elif data['type'] == 'BooleanField':
+					if c['value'] == 'on':
+						value = True
+					else:
+						value = False
+				else:
+					value = c['value']
 				con = Condition(filter=f, 
 								operator = c['operator'],
-								value=c['value'],
+								field_type = data['type'],
+								value=value,
 								field=c['field'],)
 				con.save()
 			r = {'filter_id':f.id}
@@ -58,9 +78,7 @@ def get_structure(request):
 			for i,x in enumerate(model._meta.get_all_field_names()):
 				obj, m, direct, m2m = model._meta.get_field_by_name(x)
 
-				if obj.name == 'id':
-					continue
-				if not direct:
+				if obj.name == 'id' or not direct or isinstance(obj, GenericRelation):
 					continue
 				f = {}
 				f.update({"type":obj.get_internal_type()})
@@ -77,9 +95,13 @@ def get_structure(request):
 
 @login_required
 def use_filter(request):
-	if not request.is_ajax():
+	if request.is_ajax():
 		if 'filter_id' in request.GET:
-			flt = Filter.objects.only('content_type').get(pk = request.GET['filter_id'])
+			try:
+				flt = Filter.objects.only('content_type').get(pk = request.GET['filter_id'])
+			except Filter.DoesNotExist:
+				return HttpResponseForbidden('[{"error":"Filter Not found."}]', 
+					mimetype='application/json; charset=utf8')
 			model = ContentType.model_class(flt.content_type)
 			kwargs = {}
 			for c in flt.conditions.all():
@@ -93,9 +115,7 @@ def use_filter(request):
 				field_list = {}
 				for f in q._meta.get_all_field_names():
 					obj, model, direct, m2m = q._meta.get_field_by_name(f)
-					if isinstance(obj, GenericRelation):
-						continue
-					if not direct:
+					if not direct or isinstance(obj, GenericRelation):
 						continue
 					if m2m:
 						l = {}
@@ -103,9 +123,15 @@ def use_filter(request):
 						for m in obj.value_from_object(q):
 							l.update({m.pk:m.__unicode__()})
 						field_list.update({f:l})
+					elif obj.rel:
+						val = q.__getattribute__(obj.name)
+						if val:
+							l = {val.pk:val.__unicode__()}
+							field_list.update({obj.name:l})
+						else:
+							field_list.update({f:None})
 					else:
 						field_list.update({f:obj.value_to_string(q)})
-
 				response.update({i:field_list})
 			r = json.dumps(response, indent = 4 * ' ')
 			return HttpResponse(r, 
@@ -146,10 +172,10 @@ def get_typeahead(request):
 
 def get_filters_by_user(request):
 	if request.is_ajax():
-		user_filters = Filter.objects.filter(user = request.user)
+		user_filters = Filter.objects.filter(Q(user = request.user.id)|Q(for_all = True))
 		f_list = {}
-		for f in user_filters:
-			f_list.update({'id':f.pk, 'name':f.name, 'quick':f.quick})
+		for i,f in enumerate(user_filters):
+			f_list.update({i:{'id':f.pk, 'name':f.name, 'quick':f.quick}})
 		return HttpResponse(json.dumps(f_list, indent = 4 * ' '), 
 			mimetype='application/json; charset=utf8')
 	return HttpResponseForbidden('[{"error":"Forbidden. Wrong headers."}]', 

@@ -21,13 +21,25 @@ How to use:
 
 Connect app to your project:
 ============================
-1. Open ``settings.py`` of your project. At the end of the file write ``INSTALLED_APPS += ('filter_manager',)``
-2. Open ``urls.py`` file. Edit ``urlpatterns`` by adding ``('^pimp-my-filter/', include('filter_manager.urls')),``
-3. Open your shell, find your project and run `python manage.py syncdb`.
-4. Insert [this code](https://raw.github.com/fynjah/django-pimp-my-filter/master/filter_manager/templates/base.html) to your template, somewhere.
-5. Insert ``{%load% static}`` and ``{% get_static_prefix as static_prefix %}`` to your template, at the top of the file.
-6. Insert somewhere *after* jQuery and Twitter Bootstrap inits, this: ``<script type="text/javascript" src="{{ static_prefix }}filter_manager/filter_manager.js "></script>``
-7. Place somewhere in template, this:
+1. Open ``settings.py`` of your project. At the end of the file write ``INSTALLED_APPS += ('filter_manager',)``.
+2. Also add this: 
+<pre>
+    PIMP_MY_FILTER = {
+        'ALLOWED_MODELS': (
+            'your_app1.your_model1', 
+            'your_app2.your_model2',
+            ...
+            'appN.modelN',
+        ),
+    }
+<pre>
+Any other models will be ignored with error.
+3. Open ``urls.py`` file. Edit ``urlpatterns`` by adding ``('^pimp-my-filter/', include('filter_manager.urls')),``
+4. Open your shell, find your project and run `python manage.py syncdb`.
+5. Insert [this code](https://raw.github.com/fynjah/django-pimp-my-filter/master/filter_manager/templates/base.html) to your template, somewhere.
+6. Insert ``{%load% static%}`` and ``{% get_static_prefix as static_prefix %}`` to your template, at the top of the file.
+7. Insert somewhere *after* jQuery and Twitter Bootstrap inits, this: ``<script type="text/javascript" src="{{ static_prefix }}filter_manager/filter_manager.js "></script>``
+8. Place somewhere in template, this:
 <pre>
 	    $(document).ready(function(){
 	        $(document).on('click', '#new-filter-button', function(e){
@@ -43,12 +55,11 @@ Connect app to your project:
 	                });
 	            });
 </pre>
-7. Start your project, jump to page with edited template and click this pretty button `New filter`
-8. You'll see modal window, something like on the pic at the top of this README.
-9. Try to select some field. Each type of field has own `value` field, that corresponds to type of field in model.
-10. Try to select `ForeignKey` field(find name of field in your model), and try to start typing in `value` field.
-11. That's it.
-12. THIS APP IS UNFINNISHED! It can build your filter and store in DB! Nothing more, for this moment!
+9. Start your project, jump to page with edited template and click this pretty button `New filter`
+10. You'll see modal window, something like on the pic at the top of this README.
+11. Try to select some field. Each type of field has own `value` field, that corresponds to type of field in model.
+12. Try to select `ForeignKey` field(find name of field in your model), and try to start typing in `value` field.
+13. That's it.
 
 JS API
 ======
@@ -67,11 +78,28 @@ JS API
 	                    return field;
 		}
 	</pre>
+3. Get filters by current user:
+<pre>
+	pimpMyFilter.getFiltersByUser();
+</pre>
+It returs object with `id`, `name` and `quick`.
+4. Use saved filter:
+<pre>
+	pimpMyFilter.userFilter(filter_id);
+</pre>
+where `filter_id` - is from `pimpMyFilter.getFiltersByUser();`
+
 
 Known issues
 ============
 1. Some bugs with HTML markup, but works nice with Chrome.
-2. For this moment you CAN use filters, but no API yet. Also, lot of bugs. At this moment works simple filters, such as:`name` `equal` `some_value`. `http://<your_host>/pimp-my-filter/use_filter/?filter_id=2`
+2. For this moment you CAN use filters, but some fields do not work at this moment.
 3. Lot of other bugs, which I will fix soon:)
+
+TODO
+====
+1. Tags
+2. Fix fields in `views.py`
+3. API
 
 PS: This app is designed for modern browsers! *Stop supporting old versions of IE!*

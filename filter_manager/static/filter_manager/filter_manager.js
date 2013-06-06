@@ -3,11 +3,12 @@ var pimpFields;
 (function( $ ){
     pimpMyFilter = {
             NAME: "PimpMyFilter",
-            VERSION:'0.1b',
+            VERSION:'0.1',
             AUTHOR:{
                 name:"Fynjah",
                 mail:"fynjah@gmail.com",
             },
+            //api
             setModalWidth: function(width){
                 _this = this;
                 _this.settings.modalWidth = width;
@@ -16,6 +17,40 @@ var pimpFields;
                     marginLeft:_this.settings.modalWidth/-2,
                 });
             },
+            useFilter:function(filter_id){
+                if((filter_id !== '') && (filter_id !== 'undefined')) {
+                    var response = false;
+                    var jqxhr = $.ajax({
+                        type: "GET",
+                        data: 'filter_id='+parseInt(filter_id),
+                        url: this.settings.url+"use_filter/",
+                        dataType: "json",
+                        global: false,
+                        async:false,
+                        success:function(data){
+                            response = data;
+                        }
+                    });
+                    return response;
+                }
+                else 
+                    return false;
+            },
+            getFiltersByUser:function(){
+                var response = false;
+                var jqxhr = $.ajax({
+                    type: "GET",
+                    url: this.settings.url+"get_filters_by_user/",
+                    dataType: "json",
+                    global: false,
+                    async:false,
+                    success:function(data){
+                      response = data;
+                    }
+                });
+                return response;
+            },
+            //end api
             __object : null,
             __buttonRemove: function(){
                 button = $('<button/>').addClass('btn row-remove btn-block').text('Remove').css({margin:'0 10px 0 0'});
@@ -137,7 +172,10 @@ var pimpFields;
                         error = true;
                         filter.find('input.filter_name').css({outline:'1px solid #ff0000'})
                     }
-                    responce = {
+                    else{
+                        filter.find('input.filter_name').css({outline:'none'})
+                    }
+                    response = {
                         name: filter.find('input.filter_name').val(),
                         quick: filter.find('input.quick-filter').prop("checked"),
                         app: _this.settings.app,
@@ -145,28 +183,31 @@ var pimpFields;
                     }
                     conditions = {}
                     $.each(filter.find('.condition'), function(key, condition){
-                        field = $(condition).find('select.fields').val();
-                        operator = $(condition).find('select.operators').val();
-                        value = $(condition).find('input.value').val();
-                        if( (field === '0') || (operator === '0') || (value === 'undefined') || (value === '') )
+                        var field = $(condition).find('select.fields').val();
+                        var operator = $(condition).find('select.operators').val();
+                        var value_field = $(condition).find('input.value');
+                        var value_data = value_field.data('pimpMyFilter');
+                        var value = value_field.val();
+                        if( (field === '0') || (operator === '0') || (value === 'undefined') || (value === ''))
                         {
                             $(this).find('.span12').css({outline:'1px solid #ff0000'})
                             error = true;
                         }
                         else{
-                            $(this).find('.span12').css({outline:''})
+                            $(this).find('.span12').css({outline:'none'})
                         }
                         conditions[key] = {
                             field:encodeURIComponent( field ),
                             operator:encodeURIComponent( operator ),
-                            value:encodeURIComponent( value )
+                            value:encodeURIComponent( value ),
+                            value_data:value_data
                         }
                     });
-                    responce.conditions = conditions;
+                    response.conditions = conditions;
                     if(!error){
                         var jqxhr = $.ajax({
                             type: "POST",
-                            data: 'filter='+window.JSON.stringify(responce),
+                            data: 'filter='+window.JSON.stringify(response),
                             url: _this.settings.url+"save_filter/",
                             dataType: "json",
                             global: false,
@@ -222,11 +263,11 @@ var pimpFields;
                                 },
                                 "operators": [
                                         [
-                                            "more",
+                                            "__gt",
                                             "MORE"
                                         ],
                                         [
-                                            "more_eq",
+                                            "__gte",
                                             "MORE or EQUAL"
                                         ],
                                         ...
@@ -263,7 +304,9 @@ var pimpFields;
                 
                 return $(this.__object)
             },
+            __typeahead_storage:{
 
+            },
             settings:{
                 structure : null,
                 header : 'New filter',
@@ -277,18 +320,23 @@ var pimpFields;
         }
         pimpFields = {
                 __parent:pimpMyFilter,
-                __AbstractInputField:function(){
-                    field = $('<input/>').addClass('value input-block-level');
+                __AbstractInputField:function(requestedField){
+                    var field = $('<input/>').addClass('value input-block-level');
+                    var data = requestedField;
+                    field.data('pimpMyFilter', data);
                     return field;
                 },
-                __AbstractSelectField:function(){
-                    field = $('<select/>').addClass('value input-block-level');
+                __AbstractSelectField:function(requestedField){
+                    var field = $('<select/>').addClass('value input-block-level');
+                    var data = requestedField;
+                    field.data('pimpMyFilter', data);
                     return field;
                 },
                 ForeignKey:function(requestedField){
-                    field = this.__AbstractInputField();
+                    var field = this.__AbstractInputField(requestedField);
                     field.attr('autocomplete','off').attr('type','text').attr('placeholder','Start typing...');
-                    
+                    var typeahead = [];
+                    var _this = this;
                     var jqxhr = $.ajax({
                         type: "POST",
                         data: 'field='+requestedField.name+'&app='+this.__parent.settings.app+'&model='+this.__parent.settings.model,
@@ -297,19 +345,32 @@ var pimpFields;
                         global: false,
                         async:true,
                         success: function(data){
-                            typeahead = [];
+                            _this.__parent.__typeahead_storage[requestedField.type+'__'+requestedField.name] = data;
                             $.each(data, function(k,v){typeahead.push(v.unicode)});
-                            field.typeahead({source:typeahead});
+                            field.typeahead({
+                                source:typeahead, 
+                                updater:function(item){
+                                    obj = _this.__parent.__typeahead_storage[requestedField.type+'__'+requestedField.name]
+                                    $.each(obj, function(k,v){
+                                        if(v.unicode === item){
+                                            data = $(field).data('pimpMyFilter');
+                                            data.fk_id = v.id;
+                                            $(field).data('pimpMyFilter', data);
+                                        }
+                                    });
+                                    return item;
+                                }
+                            });
                         }
-                    });
 
+                    });
                     return field;
                 },
-                CharField:function(){
-                    return this.__AbstractInputField().attr('type','text');
+                CharField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','text');
                 },
-                BooleanField:function(){
-                    field = this.__AbstractInputField().attr('type','checkbox');
+                BooleanField:function(requestedField){
+                    var field = this.__AbstractInputField(requestedField).attr('type','checkbox');
                     field = $('<label/>').append(field).append('<small> False</small>');
                     field.on('click', function(){
                         if($(this).find('input').is(':checked')){
@@ -321,82 +382,82 @@ var pimpFields;
                     })
                     return field;
                 },
-                IntegerField:function(){
-                    return this.__AbstractInputField().attr('type','number');
+                IntegerField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','number');
                 },
-                BigIntegerField:function(){
-                    return this.__AbstractInputField().attr('type','number');
+                BigIntegerField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','number');
                 },
-                CommaSeparatedIntegerField:function() {
-                    return this.__AbstractInputField().attr('type','text');
+                CommaSeparatedIntegerField:function(requestedField) {
+                    return this.__AbstractInputField(requestedField).attr('type','text');
                 },
-                DateField:function(){
-                    return this.__AbstractInputField().attr('type','date');
+                DateField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','date');
                 },
-                DateTimeField:function(){
-                    return this.__AbstractInputField().attr('type','datetime-local');
+                DateTimeField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','datetime-local');
                 },
-                DecimalField:function(){
-                    field = this.__AbstractInputField().attr('type','number'); 
+                DecimalField:function(requestedField){
+                    var field = this.__AbstractInputField(requestedField).attr('type','number'); 
                     field.attr('placeholder','1.0');
                     field.attr('pattern', '(^[+]?\d*\.?\d*[1-9]+\d*$)|(^[+]?[1-9]+\d*\.\d*$)');
                     return field;
                 },
-                EmailField:function(){
-                    return this.__AbstractInputField().attr('type','email');
+                EmailField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','email');
                 },
-                FileField:function(){
-                    return this.BooleanField();
+                FileField:function(requestedField){
+                    return this.BooleanField(requestedField);
                 },
-                FieldFile:function(){
-                    return this.BooleanField();
+                FieldFile:function(requestedField){
+                    return this.BooleanField(requestedField);
                 },
-                FilePathField:function(){
-                    return this.__AbstractInputField().attr('type','text');
+                FilePathField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','text');
                 },
-                FloatField:function(){
-                    return this.DecimalField();
+                FloatField:function(requestedField){
+                    return this.DecimalField(requestedField);
                 },
-                ImageField:function(){
-                    return this.BooleanField();
+                ImageField:function(requestedField){
+                    return this.BooleanField(requestedField);
                 },
-                IntegerField:function(){
-                    field = this.__AbstractInputField().attr('type','number');
+                IntegerField:function(requestedField){
+                    var field = this.__AbstractInputField(requestedField).attr('type','number');
                     field.attr('pattern','^[0-9]+$')
                     return field;
                 },
-                IPAddressField:function(){
-                    field = this.__AbstractInputField().attr('type','text');
+                IPAddressField:function(requestedField){
+                    var field = this.__AbstractInputField(requestedField).attr('type','text');
                     field.attr('placeholder','255.255.255.255')
                     field.attr('pattern','((^|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}$')
                     return field;
                 },
-                GenericIPAddressField:function(){
-                    return this.IPAddressField();
+                GenericIPAddressField:function(requestedField){
+                    return this.IPAddressField(requestedField);
                 },
-                NullBooleanField:function(){
-                    return this.BooleanField();
+                NullBooleanField:function(requestedField){
+                    return this.BooleanField(requestedField);
                 },
-                PositiveIntegerField:function(){
-                    return this.__AbstractInputField().attr('type','number');
+                PositiveIntegerField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','number');
                 },
-                PositiveSmallIntegerField:function(){
-                    return this.__AbstractInputField().attr('type','number');
+                PositiveSmallIntegerField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','number');
                 },
-                SlugField:function(){
-                    return this.__AbstractInputField().attr('type','text').attr('pattern', '^[a-zA-Z0-9\-_]+$');
+                SlugField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','text').attr('pattern', '^[a-zA-Z0-9\-_]+$');
                 },
-                SmallIntegerField:function(){
-                    return this.__AbstractInputField().attr('type','number'); 
+                SmallIntegerField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','number'); 
                 },
-                TextField:function(){
-                    return this.__AbstractInputField().attr('type','text');
+                TextField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','text');
                 },
-                TimeField:function(){
-                    return this.__AbstractInputField().attr('type','time');
+                TimeField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','time');
                 },
-                URLField:function(){
-                    return this.__AbstractInputField().attr('type','url');
+                URLField:function(requestedField){
+                    return this.__AbstractInputField(requestedField).attr('type','url');
                 },
                 ManyToManyField:function(requestedField){
                     return this.ForeignKey(requestedField)
@@ -433,7 +494,3 @@ var pimpFields;
   };
 
 })( jQuery );
-
-
-
-

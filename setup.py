@@ -11,8 +11,8 @@ setup(
     version = '0.1b',
     packages = find_packages(),
     include_package_data = True,
-    license = 'BSD License', # example license
-    description = 'An application, that helps you build your own filters and use it.',
+    license = 'BSD License', 
+    description = 'An application, that helps you build your own filters for any model and use it.',
     long_description = README,
     url = 'https://github.com/fynjah/django-pimp-my-filter',
     author = 'Anton Ievtushenko',
@@ -21,7 +21,7 @@ setup(
         'Environment :: Web Environment',
         'Framework :: Django',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License', # example license
+        'License :: OSI Approved :: BSD License', 
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Internet :: WWW/HTTP',

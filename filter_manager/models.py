@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 
-# Create your models here.
 LOGICAL_OPERATORS = (('__gt','MORE'), 
 					 ('__gte','MORE or EQUAL'),
 					 ('__lt','LESS'),
@@ -32,7 +31,7 @@ class Filter(models.Model):
 class Condition(models.Model):
 	filter = models.ForeignKey(Filter, related_name='conditions')
 	field = models.CharField(max_length=255)
-	#field_type = models.CharField(max_length=255)
+	field_type = models.CharField(max_length=255)
 	operator = models.CharField(max_length=255, choices=LOGICAL_OPERATORS)
 	value = models.CharField(max_length=255)
 	oid = models.IntegerField(blank=True, null=True)
