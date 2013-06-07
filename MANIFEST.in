@@ -1,2 +1,4 @@
 include README.md LICENSE.txt
 recursive-include filter_manager *.py *.html *.js
+exclude *.pyc 
+recursive-exclude example *.py *.html *.js

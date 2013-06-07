@@ -1,3 +1,8 @@
+import datetime
+try:
+	import simplejson as json
+except ImportError:
+	from django.utils import simplejson as json
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth.models import User
@@ -6,14 +11,10 @@ from django.shortcuts import render_to_response, RequestContext
 from django.core.context_processors import csrf
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-import datetime
-from filter_manager.models import Filter, Condition, LOGICAL_OPERATORS
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.generic import GenericRelation
-try:
-	import simplejson as json
-except ImportError:
-	from django.utils import simplejson as json
+from filter_manager.models import Filter, Condition, LOGICAL_OPERATORS
+
 
 @login_required
 def save_filter(request):
@@ -26,8 +27,10 @@ def save_filter(request):
 					return HttpResponseForbidden('[{"error":"Forbidden."}]', 
 						mimetype='application/json; charset=utf8')
 			else:
-				return HttpResponseForbidden('[{"error":"Forbidden. Check PIMP_MY_FILTER Settings."}]', 
-					mimetype='application/json; charset=utf8')
+				return HttpResponseForbidden(
+					'[{"error":"Forbidden. Check PIMP_MY_FILTER Settings."}]', 
+					mimetype='application/json; charset=utf8',
+					)
 			ct = ContentType.objects.get_by_natural_key(new_filter['app'],
 				new_filter['model'])
 
@@ -44,9 +47,15 @@ def save_filter(request):
 			
 			for k,c in new_filter['conditions'].iteritems():
 				data = c['value_data']
-				if data['type'] == 'ForeignKey' or data['type'] == 'ManyToManyField' or data['type'] == 'OneToOneField':
+				if (data['type'] == 'ForeignKey' 
+					or data['type'] == 'ManyToManyField' 
+					or data['type'] == 'OneToOneField'):
 					value = data['fk_id']
-				elif data['type'] == 'BooleanField':
+				elif (data['type'] == 'BooleanField' 
+					or data['type'] == 'NullBooleanField'
+					or data['type'] == 'FieldFile'
+					or data['type'] == 'FileField'
+					or data['type'] == 'ImageField'):
 					if c['value'] == 'on':
 						value = True
 					else:

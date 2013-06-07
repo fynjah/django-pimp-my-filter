@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+
+<html class="no-js">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Login</title>
+        <meta name="viewport" content="width=device-width">
+
+        <link href="/static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+        <link href="/static/css/bootstrap-responsive.min.css" rel="stylesheet" media="screen">
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+        <div id="login_form" style="width:200px; position:relative; left:50%; margin-left:-100px;">
+            {% if form.errors %}
+              <p class="error">Oooops, incorrect login and/or password.</p>
+            {% endif %}
+
+          <form method='post' class="form-horizontal">
+            <fieldset>
+              {% csrf_token %}
+              <legend>
+                <div class="control-group">
+                    <input type="text" name="username" value="" id="username">
+                </div>
+                <div class="control-group">
+                    <input type="password" name="password" value="" id="password">
+                 </div>
+                 <div class="form-line">
+                  <input class="btn btn-default btn-block btn-primary" type="submit" value="login" />
+                </div>
+                <input type="hidden" name="next" value="{{ next|escape }}" />
+              </legend>
+            </fieldset>
+          </form>
+           
+        </div>
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="/static/js/vendor/jquery-1.9.0.min.js"><\/script>')</script>
+        <script src="/static/js/vendor/bootstrap.min.js"></script>
+    </body>
+</html>
