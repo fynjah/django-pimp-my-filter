@@ -102,6 +102,26 @@ def get_structure(request):
 	return HttpResponseForbidden('[{"error":"Forbidden"}]', 
 		mimetype='application/json; charset=utf8')
 
+
+def use_filter_internal(filter_id):
+	if filter_id:
+		try:
+			flt = Filter.objects.only('content_type').get(pk = filter_id)
+		except Filter.DoesNotExist:
+			return None
+		model = ContentType.model_class(flt.content_type)
+		kwargs = {}
+		for c in flt.conditions.all():
+			field = None
+			lookup = c.operator
+			field = "%s%s" % (c.field, lookup)
+			kwargs.update({field:c.value})
+		return model.objects.filter(**kwargs)
+	else:
+		return None
+
+
+
 @login_required
 def use_filter(request):
 	if request.is_ajax():
